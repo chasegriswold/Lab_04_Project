@@ -60,7 +60,6 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
-void sen_char(char c);
 
 void send_char(char c)
 {
