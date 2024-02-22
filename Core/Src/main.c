@@ -60,6 +60,18 @@ void SystemClock_Config(void);
   * @brief  The application entry point.
   * @retval int
   */
+void sen_char(char c);
+
+void send_char(char c)
+{
+	while (!(USART3->ISR & USART_ISR_TXE))
+	{
+		
+	}
+	USART3->TDR = c;
+}
+
+	
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -79,7 +91,56 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+	RCC->AHBENR |= RCC_AHBENR_GPIOBEN; //enable GPIOB to RCC
+	
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN; //enable USART3 to RCC
+	
+	//Setting Alternate Function Mode in the MODERs for PB10 and PB11
+	GPIOB->MODER |= (1 << 21) | (1 << 23); //AF mode
+	
+	//PB10 and PB11 are USART3 capable and on AF4
+	
+	//Setting up Alternate Functions for pins PB10 and PB11
+	GPIOB->AFR[1] &= ~(0xF << 8); //Clear Register bits for PB10 AFR
+	GPIOB->AFR[1] &= ~(0xF << 12); //Clear Register bits for PB11 AFR
+	GPIOB->AFR[1] |= (1<<10) | (1<<14); //Set PB10 PB11 to AF4
+	//Note that in AFR High, AF4 is 0100, and PB10 is bits 8-11, and PB11 is bits 12-15
+	
+	//you may need this instead of the above
+	//GPIOA->AFR[0] |= 0x04 << GPIO_AFRL_AFRL4_Pos; /* (3) */
+	//GPIOA->AFR[1] |= (0x02 << GPIO_AFRL_AFRH8_Pos) | (0x02 <<
+	//GPIO_AFRL_AFRH9_Pos); /* (4) */
+	
+	USART3->BRR = HAL_RCC_GetHCLKFreq()/115200;
+	USART3->CR1 = USART_CR1_TE | USART_CR1_UE; //Enable TX
+	USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE; //Enable RX
+	
+//	/* Polling idle frame Transmission */
+//	while ((!USART3->ISR & USART_ISR_TC) != USART_ISR_TC)
+//	{
+//	/* add time out here for a robust application */
+//	}
+//	USART3->ICR |= USART_ICR_TCCF; /* Clear TC flag */
+//	USART3->CR1 |= USART_CR1_TCIE; /* Enable TC interrupt */
+	
+	
+//	// ---------Code example
+//	//Setting up USART TX
+//	/* (1) Oversampling by 16, 9600 baud */
+//	/* (2) 8 data bit, 1 start bit, 1 stop bit, no parity */
+//	USART3->BRR = 480000 / 96; /* (1) */
+//	USART3->CR1 = USART_CR1_TE | USART_CR1_UE; /* (2) */
+//	//Setting up USART RX
+//	/* (1) oversampling by 16, 9600 baud */
+//	/* (2) 8 data bit, 1 start bit, 1 stop bit, no parity, reception mode */
+//	USART3->BRR = 480000 / 96; /* (1) */
+//	USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE; /* (2) */
+//  // ------------
 
+	
+	
+
+	
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -91,8 +152,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+		//HAL_Delay(1000);
+		char gfpizzaisgood = 'y';
+		send_char(gfpizzaisgood);
     /* USER CODE END WHILE */
-
+	
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
