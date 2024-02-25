@@ -70,7 +70,14 @@ void send_char(char c)
 	USART3->TDR = c;
 }
 
-	
+void tx_string(char str[])
+{
+	for (int i = 0; str[i] != '\0'; i++)
+		{
+			send_char(str[i]);
+		}
+}	
+
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -151,12 +158,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-		//HAL_Delay(1000);
-		char gfpizzaisgood = 'y';
-		send_char(gfpizzaisgood);
-    /* USER CODE END WHILE */
-	
-    /* USER CODE BEGIN 3 */
+
+		//--- First Part sending Char
+		//char gfpizzaisgood = 'y';
+		//send_char(gfpizzaisgood);
+		//---------
+//		send_char('h');
+//		send_char('i');
+		char init_str[] = "testing";
+
+		tx_string(init_str);
+		send_char(' ');
+		
   }
   /* USER CODE END 3 */
 }
