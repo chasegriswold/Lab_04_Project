@@ -1,5 +1,5 @@
 /* USER CODE BEGIN Header */
-/**
+/** CHASE GRISWOLD
   ******************************************************************************
   * @file           : main.c
   * @brief          : Main program body
@@ -15,95 +15,53 @@
   *
   ******************************************************************************
   */
+
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+volatile char rx;
+volatile uint8_t rx_flag;
+volatile uint8_t led_flag;
+volatile uint8_t toggle_flag;
 
-/* USER CODE END Includes */
+volatile char led;
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
 
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
+void init_LEDs(void);
+void send_char(char c);
+void tx_string(char str[]);
+void rx_char_1(void);
+void check_input(void);
+void turn_off_led(void);
+void turn_on_led(void);
+void toggle_led(void);
 
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
   * @retval int
   */
 
-void send_char(char c)
-{
-	while (!(USART3->ISR & USART_ISR_TXE))
-	{
-		
-	}
-	USART3->TDR = c;
-}
-
-void tx_string(char str[])
-{
-	for (int i = 0; str[i] != '\0'; i++)
-		{
-			send_char(str[i]);
-		}
-}	
 
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
-
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
+	RCC->AHBENR |= RCC_AHBENR_GPIOCEN; //enable GPIOC to RCC
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN; //enable GPIOB to RCC
-	
 	RCC->APB1ENR |= RCC_APB1ENR_USART3EN; //enable USART3 to RCC
+	
 	
 	//Setting Alternate Function Mode in the MODERs for PB10 and PB11
 	GPIOB->MODER |= (1 << 21) | (1 << 23); //AF mode
-	
 	//PB10 and PB11 are USART3 capable and on AF4
 	
 	//Setting up Alternate Functions for pins PB10 and PB11
@@ -112,67 +70,51 @@ int main(void)
 	GPIOB->AFR[1] |= (1<<10) | (1<<14); //Set PB10 PB11 to AF4
 	//Note that in AFR High, AF4 is 0100, and PB10 is bits 8-11, and PB11 is bits 12-15
 	
-	//you may need this instead of the above
-	//GPIOA->AFR[0] |= 0x04 << GPIO_AFRL_AFRL4_Pos; /* (3) */
-	//GPIOA->AFR[1] |= (0x02 << GPIO_AFRL_AFRH8_Pos) | (0x02 <<
-	//GPIO_AFRL_AFRH9_Pos); /* (4) */
-	
 	USART3->BRR = HAL_RCC_GetHCLKFreq()/115200;
-	USART3->CR1 = USART_CR1_TE | USART_CR1_UE; //Enable TX
-	USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE; //Enable RX
+	USART3->CR1 = 0;
+	USART3->CR1 |= (USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE);
 	
-//	/* Polling idle frame Transmission */
-//	while ((!USART3->ISR & USART_ISR_TC) != USART_ISR_TC)
-//	{
-//	/* add time out here for a robust application */
-//	}
-//	USART3->ICR |= USART_ICR_TCCF; /* Clear TC flag */
-//	USART3->CR1 |= USART_CR1_TCIE; /* Enable TC interrupt */
+	// Enable the USART peripheral
+	USART3->CR1 |= USART_CR1_UE;
 	
+	init_LEDs();
 	
-//	// ---------Code example
-//	//Setting up USART TX
-//	/* (1) Oversampling by 16, 9600 baud */
-//	/* (2) 8 data bit, 1 start bit, 1 stop bit, no parity */
-//	USART3->BRR = 480000 / 96; /* (1) */
-//	USART3->CR1 = USART_CR1_TE | USART_CR1_UE; /* (2) */
-//	//Setting up USART RX
-//	/* (1) oversampling by 16, 9600 baud */
-//	/* (2) 8 data bit, 1 start bit, 1 stop bit, no parity, reception mode */
-//	USART3->BRR = 480000 / 96; /* (1) */
-//	USART3->CR1 = USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_UE; /* (2) */
-//  // ------------
-
+  rx_flag = 0;
+	rx = NULL;
+	led_flag = 0;
+	toggle_flag = 0;
+	
+	// ---------- Second Checkoff setup here-------
+	//Configure NVIC to enable USART3 interrupt, define interrupt priority.
+	NVIC_EnableIRQ(USART3_4_IRQn);
+	NVIC_SetPriority(USART3_4_IRQn, 2);
 	
 	
 
 	
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
-
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  while (1)
+ //infinite while loop
+ tx_string("CMD? Enter r, o, g, or b, followed by 0, 1, or 2");
+	while (1)
   {
+		// Check off part one
+		//rx_char_1();
 
-		//--- First Part sending Char
-		//char gfpizzaisgood = 'y';
-		//send_char(gfpizzaisgood);
-		//---------
-//		send_char('h');
-//		send_char('i');
-		char init_str[] = "testing";
-
-		tx_string(init_str);
-		send_char(' ');
+		if(rx_flag){
+			//process the data
+			check_input();
+		}
 		
+		// If we have both flags, we can reset
+		if ((led_flag == 1) && (toggle_flag == 1)) {
+			rx_flag = 0;
+			led_flag = 0;
+			toggle_flag = 0;
+			tx_string("Please enter another command.");
+			tx_string("CMD? Enter r, o, g, or b, followed by 0, 1, or 2");
+		}
   }
-  /* USER CODE END 3 */
 }
+
 
 /**
   * @brief System Clock Configuration
@@ -209,9 +151,173 @@ void SystemClock_Config(void)
   }
 }
 
-/* USER CODE BEGIN 4 */
+// Initialize LEDs function
+void init_LEDs(void) {	
+	GPIOC->MODER = 0; //Clear to start
+	//Initialize LEDs for toggling
+	GPIOC->MODER |= (1 << 12); //Set RED pin general purpose output (PC6)
+	GPIOC->MODER |= (1 << 14); //Set BLUE pin general purpose output (PC7)
+	GPIOC->MODER |= (1 << 16); //Set ORANGE pin general purpose output (PC8)
+	GPIOC->MODER |= (1 << 18); //Set GREEN pin general purpose output (PC9)
+	GPIOC->ODR = 0;
+	GPIOC->OTYPER = 0; //Set push pull
+	GPIOC->OSPEEDR = 0; //Set low speed
+}
 
-/* USER CODE END 4 */
+//USART3 Handler Function
+void USART3_4_IRQHandler(void)
+{
+	// Ignore input if previous information has not been processed yet
+	if(rx_flag == 0) {
+		rx = USART3->RDR;
+		rx_flag = 1;
+	}
+}
+
+
+void send_char(char c)
+{
+	while (!(USART3->ISR & USART_ISR_TXE))
+	{
+	}
+	USART3->TDR = c;
+}
+
+void tx_string(char str[])
+{
+	for (int i = 0; str[i] != '\0'; i++)
+		{
+			send_char(str[i]);
+		}
+}	
+
+void rx_char_1(void) {
+	char c;
+	
+	if((USART3->ISR & USART_ISR_RXNE)) {
+		c = USART3->RDR; // store rx read value
+		
+	 //Toggle LED based on input
+		switch(c) {
+			case 'r':
+				GPIOC->ODR ^= GPIO_ODR_6;
+				break;
+			case 'b':
+				GPIOC->ODR ^= GPIO_ODR_7;
+				break;
+			case 'o':
+				GPIOC->ODR ^= GPIO_ODR_8;
+				break;
+			case 'g':
+				GPIOC->ODR ^= GPIO_ODR_9;
+				break;
+			default:
+				tx_string("Error, You didn't push r, o, g, or b. Push one of those instead ");
+				break;
+		}
+	}
+}
+
+void check_input(void) {
+	// Check first character input to verify LED
+	if(led_flag == 0 ) {
+		switch(rx) {
+			case 'r':
+			case 'b':
+			case 'o':
+			case 'g':
+				led = rx;
+				led_flag = 1;
+				rx_flag = 0; // Ready to receive next character
+				tx_string("LED selection received. Please enter 0, 1, or 2.");
+				break;
+			default:
+				tx_string("Error: LED char not inputted, please enter r, b, g, or o.");
+				rx_flag = 0;
+				break;
+		}
+	}
+	// LED char has been received, check number
+	else {
+		switch(rx) {
+			case '0':
+				turn_off_led();
+				toggle_flag = 1;
+				break;
+			case '1':
+				turn_on_led();
+				toggle_flag = 1;
+				break;
+			case '2':
+				toggle_led();
+				toggle_flag = 1;
+				break;
+			default:
+				tx_string("Error: Number for LED control not inputted: please enter 0, 1, or 2.");
+				rx_flag = 0;
+				led_flag = 0;
+				break;
+		}
+	}
+}
+
+void turn_off_led(void) {
+	switch(led) {
+		case 'r':
+			GPIOC->ODR &= ~(1<<6);
+			tx_string("Red LED has been turned off.");
+			break;
+		case 'b':
+			GPIOC->ODR &= ~(1<<7);;
+			break;
+		case 'o':
+			GPIOC->ODR &= ~(1<<8);
+		break;
+		case 'g':
+			GPIOC->ODR &= ~(1<<9);
+			break;
+		default:
+			break;
+	}
+}
+
+void turn_on_led(void) {
+		switch(led) {
+		case 'r':
+			GPIOC->ODR |= (1<<6);
+			break;
+		case 'b':
+			GPIOC->ODR |= (1<<7);;
+			break;
+		case 'o':
+			GPIOC->ODR |= (1<<8);
+		break;
+		case 'g':
+			GPIOC->ODR |= (1<<9);
+			break;
+		default:
+			break;
+	}
+}
+
+void toggle_led(void) {
+		switch(led) {
+		case 'r':
+			GPIOC->ODR ^= (1<<6);
+			break;
+		case 'b':
+			GPIOC->ODR ^= (1<<7);;
+			break;
+		case 'o':
+			GPIOC->ODR ^= (1<<8);
+		break;
+		case 'g':
+			GPIOC->ODR ^= (1<<9);
+			break;
+		default:
+			break;
+	}
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
@@ -244,3 +350,5 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
+
