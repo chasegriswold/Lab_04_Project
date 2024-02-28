@@ -59,6 +59,7 @@ int main(void)
 	RCC->AHBENR |= RCC_AHBENR_GPIOBEN; //enable GPIOB to RCC
 	RCC->APB1ENR |= RCC_APB1ENR_USART3EN; //enable USART3 to RCC
 	
+	//NOTE: PB10 and PB11 were selected based on being directly next to a ground pin.
 	
 	//Setting Alternate Function Mode in the MODERs for PB10 and PB11
 	GPIOB->MODER |= (1 << 21) | (1 << 23); //AF mode
@@ -72,7 +73,7 @@ int main(void)
 	
 	USART3->BRR = HAL_RCC_GetHCLKFreq()/115200;
 	USART3->CR1 = 0;
-	USART3->CR1 |= (USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE);
+	USART3->CR1 |= (USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE); //Enable Tx/Rx
 	
 	// Enable the USART peripheral
 	USART3->CR1 |= USART_CR1_UE;
@@ -269,12 +270,15 @@ void turn_off_led(void) {
 			break;
 		case 'b':
 			GPIOC->ODR &= ~(1<<7);;
+			tx_string("Blue LED has been turned off.");
 			break;
 		case 'o':
 			GPIOC->ODR &= ~(1<<8);
+			tx_string("Orange LED has been turned off.");
 		break;
 		case 'g':
 			GPIOC->ODR &= ~(1<<9);
+			tx_string("Green LED has been turned off.");
 			break;
 		default:
 			break;
@@ -285,15 +289,19 @@ void turn_on_led(void) {
 		switch(led) {
 		case 'r':
 			GPIOC->ODR |= (1<<6);
+			tx_string("Red LED has been turned on.");
 			break;
 		case 'b':
-			GPIOC->ODR |= (1<<7);;
+			GPIOC->ODR |= (1<<7);
+			tx_string("Blue LED has been turned on.");
 			break;
 		case 'o':
 			GPIOC->ODR |= (1<<8);
+			tx_string("Orange LED has been turned on.");
 		break;
 		case 'g':
 			GPIOC->ODR |= (1<<9);
+			tx_string("Green LED has been turned on.");
 			break;
 		default:
 			break;
@@ -304,15 +312,19 @@ void toggle_led(void) {
 		switch(led) {
 		case 'r':
 			GPIOC->ODR ^= (1<<6);
+			tx_string("Red LED has been turned Toggled.");
 			break;
 		case 'b':
-			GPIOC->ODR ^= (1<<7);;
+			GPIOC->ODR ^= (1<<7);
+			tx_string("Blue LED has been turned Toggled.");
 			break;
 		case 'o':
 			GPIOC->ODR ^= (1<<8);
+			tx_string("Orange LED has been turned Toggled.");
 		break;
 		case 'g':
 			GPIOC->ODR ^= (1<<9);
+			tx_string("Green LED has been turned Toggled.");
 			break;
 		default:
 			break;
